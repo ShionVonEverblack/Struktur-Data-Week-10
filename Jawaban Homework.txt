@@ -1,0 +1,199 @@
+================================================================================
+JAWABAN SOAL HOMEWORK - CPU Job Scheduling dengan Binary Heap
+================================================================================
+
+
+1. Why is a binary heap a suitable way to implement the priority queue?
+
+   Binary heap cocok untuk mengimplementasikan priority queue karena:
+
+   a) Efisiensi operasi utama:
+      - Insert (add) hanya membutuhkan O(log n), karena elemen baru
+        ditambahkan di akhir array lalu di-upheap ke posisi yang tepat.
+        Panjang jalur upheap paling banyak = tinggi heap = log n.
+      - Extract-min (remove_min) juga O(log n), karena root ditukar
+        dengan elemen terakhir lalu di-downheap. Jalur downheap juga
+        paling panjang = log n.
+      - Peek/min hanya O(1), karena elemen minimum selalu berada di
+        root (index 0).
+
+   b) Struktur data berbasis array:
+      Binary heap disimpan dalam array biasa (list Python), sehingga
+      tidak memerlukan pointer seperti linked list atau tree node.
+      Ini membuat penggunaan memori lebih hemat dan akses elemen
+      lebih cepat (cache-friendly).
+
+   c) Menjaga elemen minimum selalu di posisi root:
+      Dalam CPU scheduling, kita selalu butuh job dengan priority
+      tertinggi (nilai terkecil). Binary min-heap menjamin elemen
+      terkecil selalu di root, sehingga akses ke job paling prioritas
+      sangat cepat.
+
+   d) Tidak perlu sorting penuh:
+      Berbeda dengan sorted array yang butuh O(n) untuk insert,
+      binary heap hanya menjaga partial order (heap property),
+      sehingga insert dan delete lebih efisien.
+
+
+2. Which heap operations are most important in this simulation, and why?
+
+   Operasi heap yang paling penting dalam simulasi ini adalah:
+
+   a) insert (add) - SANGAT PENTING
+      Digunakan setiap kali ada command "add job ... with length ...
+      and priority ...". Setiap job baru harus dimasukkan ke dalam
+      heap agar bisa dijadwalkan oleh CPU. Tanpa operasi ini, tidak
+      ada job yang bisa masuk ke ready queue.
+
+   b) extract_min (remove_min) - SANGAT PENTING
+      Digunakan setiap kali CPU idle dan perlu mengambil job berikutnya
+      dari ready queue. Operasi ini mengambil job dengan priority
+      tertinggi (nilai priority terkecil) dan mengeluarkannya dari heap.
+      Ini adalah inti dari penjadwalan berbasis priority.
+
+   c) is_empty - PENTING
+      Digunakan untuk mengecek apakah masih ada job yang menunggu
+      di ready queue. Ini menentukan apakah CPU bisa mengambil job
+      baru atau harus idle.
+
+   Operasi insert dan extract_min paling krusial karena keduanya
+   merupakan siklus utama simulasi: job masuk (insert) -> CPU ambil
+   job terprioritias (extract_min) -> jalankan sampai selesai -> ulangi.
+
+
+3. In what kind of workload does a binary heap become clearly better
+   than simpler data structures?
+
+   Binary heap menjadi jelas lebih unggul dibanding struktur data
+   sederhana dalam kondisi berikut:
+
+   a) Jumlah job yang besar (n besar):
+      - Jika menggunakan unsorted array/list: insert O(1) tapi
+        extract_min O(n) karena harus scan seluruh array.
+      - Jika menggunakan sorted array/list: extract_min O(1) tapi
+        insert O(n) karena harus geser elemen.
+      - Binary heap: insert O(log n) DAN extract_min O(log n).
+      Saat n besar (misalnya ribuan job), perbedaan antara O(n)
+      dan O(log n) sangat signifikan.
+
+   b) Workload dengan banyak operasi insert dan extract bergantian:
+      Dalam CPU scheduling, job terus-menerus ditambahkan dan
+      diambil secara bergantian. Binary heap memberikan performa
+      yang konsisten O(log n) untuk kedua operasi ini, sedangkan
+      struktur sederhana akan memiliki salah satu operasi yang
+      lambat O(n).
+
+   c) Workload dinamis dengan priority beragam:
+      Ketika job-job memiliki priority yang bervariasi dan terus
+      berubah (ada yang masuk, ada yang keluar), binary heap
+      secara otomatis menjaga urutan priority tanpa perlu
+      melakukan sorting ulang setiap kali ada perubahan.
+
+   Contoh konkret: 1000 job dengan priority acak, masing-masing
+   di-insert dan di-extract satu per satu.
+   - Unsorted list: ~1000 x 1000 = 1.000.000 operasi untuk extract.
+   - Binary heap:   ~1000 x 10  = 10.000 operasi (log2(1000) ~ 10).
+
+
+4. What is the time complexity of the following binary heap operations?
+
+   +-------------+------------------+---------------------------------------+
+   | Operasi     | Time Complexity  | Penjelasan                            |
+   +-------------+------------------+---------------------------------------+
+   | add/insert  | O(log n)         | Elemen ditambahkan di akhir array     |
+   |             |                  | lalu di-upheap. Upheap naik maksimal  |
+   |             |                  | sepanjang tinggi heap = log n level.  |
+   +-------------+------------------+---------------------------------------+
+   | min/peek    | O(1)             | Elemen minimum selalu berada di       |
+   |             |                  | root (index 0), jadi tinggal akses    |
+   |             |                  | langsung tanpa perlu mencari.         |
+   +-------------+------------------+---------------------------------------+
+   | remove_min  | O(log n)         | Root ditukar dengan elemen terakhir,  |
+   |             |                  | lalu elemen terakhir di-pop, dan      |
+   |             |                  | root baru di-downheap. Downheap       |
+   |             |                  | turun maksimal sepanjang tinggi heap  |
+   |             |                  | = log n level.                        |
+   +-------------+------------------+---------------------------------------+
+   | is_empty    | O(1)             | Hanya mengecek panjang array          |
+   |             |                  | (len(self.heap) == 0), yang merupakan |
+   |             |                  | operasi konstan pada Python list.     |
+   +-------------+------------------+---------------------------------------+
+   | len         | O(1)             | Python list menyimpan panjangnya      |
+   |             |                  | secara internal, jadi len() adalah    |
+   |             |                  | operasi konstan.                      |
+   +-------------+------------------+---------------------------------------+
+
+   Catatan: n = jumlah elemen (job) dalam heap saat operasi dilakukan.
+
+
+5. How does the height of a binary heap affect its performance?
+
+   Tinggi binary heap sangat mempengaruhi performa karena:
+
+   a) Tinggi heap = O(log n)
+      Binary heap adalah complete binary tree, sehingga tingginya
+      selalu terjaga pada floor(log2(n)), di mana n = jumlah elemen.
+      Contoh: 1000 elemen -> tinggi = floor(log2(1000)) = 9 level saja.
+
+   b) Operasi upheap dan downheap berbanding lurus dengan tinggi:
+      - Upheap (saat insert): naik dari leaf ke root, paling banyak
+        melewati h level (h = tinggi heap).
+      - Downheap (saat remove_min): turun dari root ke leaf, paling
+        banyak melewati h level.
+      Jadi, semakin tinggi heap, semakin banyak perbandingan dan
+      swap yang dilakukan per operasi.
+
+   c) Karena h = O(log n), maka:
+      - Walaupun jumlah elemen bertambah secara eksponensial,
+        tinggi heap hanya bertambah secara linear.
+      - Misal: dari 1.000 ke 1.000.000 elemen, tinggi hanya naik
+        dari ~10 ke ~20. Ini berarti performa hanya turun sedikit.
+
+   d) Perbandingan dengan struktur lain:
+      - Array tidak terurut: tidak bergantung pada tinggi, tapi
+        search membutuhkan O(n).
+      - BST yang tidak balanced: tingginya bisa O(n) pada kasus
+        terburuk, membuat operasi jadi O(n).
+      - Binary heap: tingginya selalu O(log n) karena sifat
+        complete tree, sehingga performanya terjamin.
+
+
+6. Is the total running time of the simulator influenced more by the
+   number of jobs or by the number of time slices? Explain.
+
+   Total running time simulator dipengaruhi oleh KEDUANYA, tetapi
+   dengan cara yang berbeda:
+
+   a) Pengaruh jumlah TIME SLICES (T):
+      - Loop utama simulator berjalan sebanyak T iterasi.
+      - Setiap iterasi memproses 1 time slice (parsing command,
+        menjalankan CPU, mencatat output).
+      - Jadi T langsung menentukan berapa kali loop berjalan.
+      - Kompleksitas minimal: O(T).
+
+   b) Pengaruh jumlah JOBS (J):
+      - Setiap job yang ditambahkan memerlukan operasi insert ke
+        heap = O(log J).
+      - Setiap kali CPU mengambil job baru, diperlukan extract_min
+        dari heap = O(log J).
+      - Total ada J insert dan J extract_min = O(J log J).
+
+   c) Total running time keseluruhan:
+      - O(T + J log J)
+      - JIKA jumlah job sedikit tapi time slice panjang (misal:
+        1 job dengan length 100), maka T mendominasi = O(T).
+      - JIKA jumlah job banyak tapi masing-masing pendek (misal:
+        1000 job masing-masing length 1), maka J log J mendominasi.
+
+   d) Kesimpulan:
+      Dalam praktiknya, jumlah TIME SLICES biasanya lebih banyak
+      karena T >= total length semua job (setiap job butuh minimal
+      1 slice untuk berjalan). Namun, operasi HEAP yang bergantung
+      pada jumlah job (J) adalah yang paling mahal per operasinya
+      (O(log J) vs O(1) per slice). Jadi:
+      - Jika J kecil: T mendominasi (loop per slice).
+      - Jika J besar: J log J mendominasi (operasi heap).
+      Secara keseluruhan, keduanya berkontribusi dan total
+      complexity = O(T + J log J).
+
+================================================================================
